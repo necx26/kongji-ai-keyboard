@@ -1,0 +1,25 @@
+.gradle/
+**/build/
+local.properties
+.tools/
+*.jks
+*.keystore
+.idea/
+*.iml
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+!.env.sample
+*.p12
+*.pfx
+*.pem
+*.key
+**/shared_prefs/
+**/databases/
+*.log
+*.apk
+*.aab
+# Local delivery artifacts stay on disk; publish selected APKs with GitHub Releases.
+/交付/
