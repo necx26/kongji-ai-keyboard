@@ -26,9 +26,10 @@ import java.util.concurrent.Future;
 
 public class AiInputService extends InputMethodService {
     private final Handler main=new Handler(Looper.getMainLooper());
+    private final Runnable candidateRefresh=this::renderCandidatesNow;
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private LinearLayout root,toolbar,keys,candidates,aiPanel;private TextView composing,status;
-    private KeyboardStyle appearance;
+    private KeyboardStyle appearance;private KeyboardFrame keyboardFrame;
     private HandwritingPanel handwriting;private List<Pinyin.Candidate> inkCandidates=List.of();
     private HorizontalScrollView candidateStrip;private LinearLayout expandedCandidates;private Button expandButton;
     private List<Pinyin.Candidate> shown=java.util.List.of();private boolean expanded=false,compositionAllowed=true,noLearning=false,numericEditor=false,autoSpace=false;
@@ -39,8 +40,8 @@ public class AiInputService extends InputMethodService {
     private ScreenReaderService.Snapshot snapshot;private Future<?> future;private ApiClient client;
     @Override public void onCreate(){super.onCreate();chinese=InputPreferences.prefs(this).getBoolean("chinese_mode",true);pinyin=new Pinyin(this,()->updateCandidates());}
     @Override public View onCreateInputView(){
-        appearance=KeyboardStyle.load(this);
-        root=Ui.column(this);root.setBackground(Glass.backdrop(appearance));root.setPadding(Ui.dp(this,6),Ui.dp(this,8),Ui.dp(this,6),Ui.dp(this,33));
+        appearance=loadAppearance();
+        root=Ui.column(this);root.setBackground(Glass.backdrop(this,appearance));root.setPadding(Ui.dp(this,6),Ui.dp(this,8),Ui.dp(this,6),Ui.dp(this,33));
         root.setOnApplyWindowInsetsListener((v,insets)->{
             int navigation=Math.max(Ui.dp(this,28),insets.getInsets(android.view.WindowInsets.Type.navigationBars()).bottom);
             v.setPadding(Ui.dp(this,6),Ui.dp(this,8),Ui.dp(this,6),Ui.dp(this,5)+navigation);return insets;
@@ -53,14 +54,18 @@ public class AiInputService extends InputMethodService {
         candidateStrip=new HorizontalScrollView(this);candidateStrip.setHorizontalScrollBarEnabled(false);candidates=Ui.row(this);candidates.setBaselineAligned(false);candidateStrip.addView(candidates);candidateBar.addView(candidateStrip,new LinearLayout.LayoutParams(0,Ui.dp(this,44),1));
         expandButton=glassButton("⌄",false,v->{expanded=!expanded;renderExpanded();});expandButton.setContentDescription(Language.text(AiInputService.this,"展开候选"));candidateBar.addView(expandButton,new LinearLayout.LayoutParams(Ui.dp(this,40),Ui.dp(this,40)));root.addView(candidateBar);
         expandedCandidates=Ui.column(this);expandedCandidates.setVisibility(View.GONE);root.addView(expandedCandidates);
-        keys=Ui.column(this);root.addView(keys);renderKeys();return root;
+        keys=Ui.column(this);keyboardFrame=new KeyboardFrame(this,appearance,false);keyboardFrame.addView(keys);root.addView(keyboardFrame);renderKeys();return root;
     }
     @Override public void onStartInputView(EditorInfo info,boolean restarting){
         super.onStartInputView(info,restarting);
-        appearance=KeyboardStyle.load(this);pinyin.configure(noLearning||!compositionAllowed);root.setBackground(Glass.backdrop(appearance));
+        appearance=loadAppearance();pinyin.configure(noLearning||!compositionAllowed);root.setBackground(Glass.backdrop(this,appearance));
         status.setTextColor(appearance.muted());composing.setTextColor(appearance.ink());
-        renderToolbar();renderKeys();updateCandidates();
+        updateCompactView();keyboardFrame.setStyle(appearance);renderToolbar();renderKeys();updateCandidates();
     }
+    private KeyboardStyle loadAppearance(){KeyboardStyle value=KeyboardStyle.load(this);
+        if(getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE){value.height=Math.min(value.height,34);value.font=18;value.quickSymbols=false;value.lift=Math.min(value.lift,24);}return value;
+    }
+    private void updateCompactView(){boolean compact=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;status.setVisibility(compact?View.GONE:View.VISIBLE);composing.setVisibility(compact?View.GONE:View.VISIBLE);}
     private Button glassButton(String title,boolean primary,View.OnClickListener action){Button b=Glass.button(this,appearance,Language.text(this,title),primary,!primary,action);b.setMaxLines(2);b.setAutoSizeTextTypeUniformWithConfiguration(9,14,1,android.util.TypedValue.COMPLEX_UNIT_SP);return b;}
     private void renderToolbar(){
         toolbar.removeAllViews();
@@ -82,20 +87,16 @@ public class AiInputService extends InputMethodService {
         updateCandidates();if(keys!=null)renderKeys();
     }
     @Override public void onFinishInput(){if(handwriting!=null)handwriting.clear();session++;cancelRequest();clearSnapshot();buffer="";resetRun();previousWord="";autoSpace=false;expanded=false;if(aiPanel!=null)aiPanel.removeAllViews();updateCandidates();super.onFinishInput();}
-    @Override public void onWindowHidden(){if(handwriting!=null)handwriting.clear();operation++;cancelRequest();clearSnapshot();if(aiPanel!=null)aiPanel.removeAllViews();super.onWindowHidden();}
+    @Override public void onWindowHidden(){if(root!=null)Glass.cancelTouches(root);if(handwriting!=null)handwriting.clear();operation++;cancelRequest();clearSnapshot();if(aiPanel!=null)aiPanel.removeAllViews();super.onWindowHidden();}
     @Override public boolean onEvaluateFullscreenMode(){return false;}
     private void renderKeys(){
         if(handwriting!=null){handwriting.close();handwriting=null;}inkCandidates=List.of();
-        if(appearance.mode==2&&compositionAllowed&&!numericEditor&&!symbols){keys.removeAllViews();if(appearance.quickSymbols)KeyboardLayout.addQuickSymbols(keys,appearance,effectiveChinese(),this::type);handwriting=new HandwritingPanel(this,appearance,effectiveChinese(),choices->{inkCandidates=new java.util.ArrayList<>();for(String value:choices)inkCandidates.add(pinyin.handwriting(value));updateCandidates();});keys.addView(handwriting);LinearLayout functions=Ui.row(this);Ui.addButton(functions,glassButton("123",false,v->{symbols=true;renderKeys();}),1,38);Ui.addButton(functions,glassButton(effectiveChinese()?"中":"EN",false,v->{chinese=!chinese;InputPreferences.prefs(AiInputService.this).edit().putBoolean("chinese_mode",chinese).apply();previousWord="";renderKeys();updateCandidates();}),1,38);Ui.addButton(functions,glassButton("空格",false,v->space()),2,38);Ui.addButton(functions,glassButton("⌫",false,v->delete()),1,38);Ui.addButton(functions,glassButton("回车",true,v->enter()),1.3f,38);keys.addView(functions);return;}
+        if(appearance.mode==2&&compositionAllowed&&!numericEditor&&!symbols){keys.removeAllViews();if(appearance.quickSymbols)KeyboardLayout.addQuickSymbols(keys,appearance,effectiveChinese(),this::type);handwriting=new HandwritingPanel(this,appearance,effectiveChinese(),choices->{inkCandidates=new java.util.ArrayList<>();for(String value:choices)inkCandidates.add(pinyin.handwriting(value));updateCandidates();});keys.addView(handwriting);LinearLayout functions=Ui.row(this);Ui.addButton(functions,glassButton("123",false,v->{symbols=true;renderKeys();}),1,38);Ui.addButton(functions,glassButton(effectiveChinese()?"中":"EN",false,v->{chinese=!chinese;InputPreferences.prefs(AiInputService.this).edit().putBoolean("chinese_mode",chinese).apply();previousWord="";renderKeys();updateCandidates();}),1,38);Ui.addButton(functions,glassButton("空格",false,v->space()),2,38);Button deletion=glassButton("⌫",false,v->delete());deletion.setContentDescription(Language.text(this,"删除"));Glass.repeat(deletion,this::delete);Ui.addButton(functions,deletion,1,38);Ui.addButton(functions,glassButton("回车",true,v->enter()),1.3f,38);keys.addView(functions);return;}
         KeyboardLayout.build(keys,appearance,effectiveChinese(),shift,symbols||numericEditor,new KeyboardLayout.Actions(){
             public void key(String value){type(value);}
             public void shift(){long now=android.os.SystemClock.uptimeMillis();if(shift&&!capsLock&&now-lastShiftTap<350){capsLock=true;}else{shift=!shift;capsLock=false;}lastShiftTap=now;renderKeys();}
             public void delete(){AiInputService.this.delete();}
-            public void clear(){
-                InputConnection c=getCurrentInputConnection();if(c==null)return;
-                if(!buffer.isEmpty()){buffer="";resetRun();ownEdit();c.setComposingText("",1);c.finishComposingText();updateCandidates();}
-                else{ownEdit();c.deleteSurroundingTextInCodePoints(30,0);previousWord="";autoSpace=false;updateCandidates();}
-            }
+            public void clear(){AiInputService.this.delete();}
             public void symbols(){flushBest();if(!buffer.isEmpty())return;symbols=!symbols;expanded=false;renderKeys();updateCandidates();}
             public void language(){if(!compositionAllowed){toast("先试试吧");return;}flushBest();if(!buffer.isEmpty())return;chinese=!chinese;InputPreferences.prefs(AiInputService.this).edit().putBoolean("chinese_mode",chinese).apply();symbols=false;shift=false;capsLock=false;previousWord="";expanded=false;renderKeys();updateCandidates();}
             public void switchIme(boolean picker){if(picker)((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();else switchToNextInputMethod(false);}
@@ -122,7 +123,8 @@ public class AiInputService extends InputMethodService {
             autoSpace=false;commit(value);if(letter&&shift&&!capsLock){shift=false;renderKeys();}previousWord="";expanded=false;updateCandidates();
         }
     }
-    private void updateCandidates(){if(candidates==null)return;candidates.removeAllViews();
+    private void updateCandidates(){if(candidates==null)return;main.removeCallbacks(candidateRefresh);main.post(candidateRefresh);}
+    private void renderCandidatesNow(){if(candidates==null)return;candidates.removeAllViews();
         composing.setText(Language.text(this,!compositionAllowed?"安全直接输入 · 不记忆":!pinyin.ready()?pinyin.loadingMessage():buffer.isEmpty()?(effectiveChinese()?(appearance.mode==2?"中文 · 手写，点选候选输入":appearance.mode==1?"中文 · 九宫格拼音":"中文 · 连续拼音与简拼"):"英文 · 点选补全，空格保留原词"):buffer.replace("'"," · ")));
         if(!compositionAllowed||numericEditor||symbols){shown=java.util.List.of();expanded=false;renderExpanded();return;}
         if(handwriting!=null&&!inkCandidates.isEmpty())shown=inkCandidates;else if(buffer.isEmpty()){previousWord=beforeWord();shown=pinyin.predictions(language(),previousWord);}else shown=effectiveChinese()?pinyin.candidates(buffer,previousWord):pinyin.english(buffer);
@@ -152,7 +154,7 @@ public class AiInputService extends InputMethodService {
         while(!buffer.isEmpty()){List<Pinyin.Candidate> choices=pinyin.candidates(buffer,previousWord);if(choices.isEmpty()){flushRaw();break;}int old=buffer.length();choose(choices.get(0));if(buffer.length()>=old)break;}
     }
     private void space(){if(handwriting!=null&&!inkCandidates.isEmpty()){choose(inkCandidates.get(0));return;}if(!buffer.isEmpty()){if(effectiveChinese()){if(!pinyin.ready()){toast(pinyin.loadingMessage());return;}List<Pinyin.Candidate> choices=pinyin.candidates(buffer,previousWord);if(choices.isEmpty())flushRaw();else choose(choices.get(0));}else finishEnglish(true);}else{if(autoSpace){autoSpace=false;return;}commit(" ");}expanded=false;renderExpanded();}
-    private void delete(){InputConnection c=getCurrentInputConnection();if(c==null)return;ownEdit();expanded=false;if(!buffer.isEmpty()){buffer=buffer.substring(0,buffer.length()-1);c.setComposingText(buffer,1);if(buffer.isEmpty()){c.finishComposingText();resetRun();}}else{c.deleteSurroundingTextInCodePoints(1,0);autoSpace=false;previousWord="";}updateCandidates();}
+    private void delete(){InputConnection c=getCurrentInputConnection();if(c==null)return;ownEdit();expanded=false;if(!buffer.isEmpty()){buffer=buffer.substring(0,buffer.length()-1);c.setComposingText(buffer,1);if(buffer.isEmpty()){c.finishComposingText();resetRun();}}else{CharSequence selected=c.getSelectedText(0);if(selected!=null&&selected.length()>0)c.commitText("",1);else c.deleteSurroundingTextInCodePoints(1,0);autoSpace=false;previousWord="";}updateCandidates();}
     private void enter(){if(handwriting!=null&&!inkCandidates.isEmpty())choose(inkCandidates.get(0));flushBest();if(!buffer.isEmpty())return;InputConnection c=getCurrentInputConnection();if(c==null)return;autoSpace=false;previousWord="";EditorInfo e=getCurrentInputEditorInfo();int action=e==null?EditorInfo.IME_ACTION_NONE:e.imeOptions&EditorInfo.IME_MASK_ACTION;
         ownEdit();if(e!=null&&(e.imeOptions&EditorInfo.IME_FLAG_NO_ENTER_ACTION)==0&&action!=EditorInfo.IME_ACTION_NONE&&action!=EditorInfo.IME_ACTION_UNSPECIFIED)c.performEditorAction(action);else c.commitText("\n",1);expanded=false;updateCandidates();
     }
@@ -212,5 +214,5 @@ public class AiInputService extends InputMethodService {
     private void clearSnapshot(){if(snapshot!=null){snapshot.close();snapshot=null;}}
     private void openSettings(){flushBest();Intent intent=new Intent(this,SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);startActivity(intent);}
     private void toast(String message){Toast.makeText(this,Language.message(this,message),Toast.LENGTH_SHORT).show();}
-    @Override public void onDestroy(){if(handwriting!=null)handwriting.close();operation++;cancelRequest();clearSnapshot();worker.shutdown();pinyin.close();super.onDestroy();}
+    @Override public void onDestroy(){main.removeCallbacks(candidateRefresh);if(root!=null)Glass.cancelTouches(root);if(handwriting!=null)handwriting.close();operation++;cancelRequest();clearSnapshot();worker.shutdown();pinyin.close();super.onDestroy();}
 }

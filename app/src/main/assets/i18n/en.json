@@ -239,5 +239,18 @@
   "）。页面可能受保护，或系统限制了截图。": "). This page may be protected or screenshots restricted.",
   "截图不可用，本次仅使用可见文字": "Screenshot unavailable; using visible text only",
   "中文 · 手写，点选候选输入": "Chinese · Handwriting, tap a candidate",
-  "中文 · 九宫格拼音": "Chinese · 9-key pinyin"
+  "中文 · 九宫格拼音": "Chinese · 9-key pinyin",
+  "白色": "White",
+  "深色": "Dark",
+  "拖拽编辑": "Edit position",
+  "结束编辑": "Finish editing",
+  "拖动键盘移动，拖右下角调整大小": "Drag the keyboard to move; drag the bottom-right handle to resize",
+  "键盘位置预览": "Keyboard position preview",
+  "导入照片背景": "Import background photo",
+  "移除照片背景": "Remove background photo",
+  "照片背景": "Photo background",
+  "正在导入照片…": "Importing photo…",
+  "照片无法导入，请换一张图片": "Cannot import this photo. Try another image.",
+  "恢复标准尺寸和位置，点击应用后生效。": "Restore standard size and position. Apply to save.",
+  "句号": "Period"
 }

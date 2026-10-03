@@ -1,0 +1,43 @@
+{
+  "version": "0.5.0",
+  "versionCode": 7,
+  "package": "com.kongji.aikeyboard",
+  "apk": "D:\\控机大师\\release\\控机AI输入法-v0.5.0.apk",
+  "bytes": 41557541,
+  "sha256": "dd85bb6d5828452500e1dad0662bd071476a61291bc933e302e00b1fd274cd03",
+  "minSdk": 30,
+  "targetSdk": 35,
+  "compileSdk": 36,
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 22
+  },
+  "engineChecksPassed": 43,
+  "memoryChecksPassed": 16,
+  "keyboardChecksPassed": 36,
+  "emulator": "Pixel 6 / Android 36 / emulator-5554",
+  "coverInstall": "passed",
+  "uiValidatedSeparately": [
+    "empty input has no fixed greetings",
+    "letter commits on release",
+    "up and down swipe choose symbol once",
+    "compact preview stays above the pressed key",
+    "hold-delete repeats character by character and stops on release",
+    "dragged geometry persists and applies to IME",
+    "corner resize changes real keyboard and keys still type",
+    "white and dark page themes",
+    "photo picker import and process-restart persistence",
+    "nine-key 64426 retains normal nihao entry",
+    "first handwriting stroke auto recognition and candidate filling",
+    "six UI languages switch without clearing learning database",
+    "landscape keys remain on screen",
+    "practice text survives portrait-to-landscape rotation"
+  ],
+  "uiWholeScriptCompletedInOneRun": false,
+  "uiHarnessLimitations": "UiAutomation native crashes and transient accessibility trees required segmented reruns.",
+  "realDeviceValidated": false,
+  "realModelApiCalled": false,
+  "signing": "debug; local installation build",
+  "date": "2026-10-03"
+}

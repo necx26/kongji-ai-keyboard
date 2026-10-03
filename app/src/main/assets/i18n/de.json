@@ -239,5 +239,18 @@
   "）。页面可能受保护，或系统限制了截图。": "). Die Seite ist eventuell geschützt oder Screenshots sind gesperrt.",
   "截图不可用，本次仅使用可见文字": "Screenshot nicht verfügbar, nur sichtbarer Text",
   "中文 · 手写，点选候选输入": "Chinesisch · Handschrift, Vorschlag antippen",
-  "中文 · 九宫格拼音": "Chinesisch · Pinyin mit 9 Tasten"
+  "中文 · 九宫格拼音": "Chinesisch · Pinyin mit 9 Tasten",
+  "白色": "Weiß",
+  "深色": "Dunkel",
+  "拖拽编辑": "Position bearbeiten",
+  "结束编辑": "Bearbeitung beenden",
+  "拖动键盘移动，拖右下角调整大小": "Tastatur zum Verschieben ziehen; unten rechts die Größe ändern",
+  "键盘位置预览": "Vorschau der Tastaturposition",
+  "导入照片背景": "Hintergrundfoto importieren",
+  "移除照片背景": "Hintergrundfoto entfernen",
+  "照片背景": "Fotohintergrund",
+  "正在导入照片…": "Foto wird importiert…",
+  "照片无法导入，请换一张图片": "Foto kann nicht importiert werden. Bitte ein anderes Bild wählen.",
+  "恢复标准尺寸和位置，点击应用后生效。": "Standardgröße und Position wiederherstellen. Mit Anwenden speichern.",
+  "句号": "Punkt"
 }

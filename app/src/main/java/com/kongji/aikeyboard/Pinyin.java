@@ -34,7 +34,7 @@ final class Pinyin implements AutoCloseable {
     }
     private BufferedReader reader(String asset)throws java.io.IOException{return new BufferedReader(new InputStreamReader(context.getAssets().open(asset),StandardCharsets.UTF_8));}
     boolean ready(){return ready;}
-    String loadingMessage(){return Language.text(context,failed?"词库加载失败，请重新打开输入法":"初始化，别急…");}
+    String loadingMessage(){return Language.text(context,failed?"词库加载失败，请重新打开输入法":"");}
     private void replaceWords(List<LearningStore.Word> saved){words.clear();for(int i=saved.size()-1;i>=0;i--){LearningStore.Word w=saved.get(i);words.put(wordKey(w.language,w.spelling,w.value),w);}}
     void configure(boolean privateField){this.privateField=privateField;options=InputPreferences.load(context);if(ready){int current=InputPreferences.epoch(context);if(epoch!=current){replaceWords(store.words());learnedNext=store.next();epoch=current;}applyOptions();}}
     private void applyOptions(){chinese.fuzzy(options.initials,options.finals);chinese.correction(options.typos,new String[]{"QWERTY","QWERTZ","AZERTY"}[KeyboardStyle.load(context).layout]);chinese.clearPersonal();english.clearPersonal();if(options.memory&&!privateField){for(LearningStore.Word w:words.values()){if(w.language.equals("zh"))chinese.personal(w.spelling,w.value,w.hits,w.updated);else english.personal(w.value,w.hits);}for(LearningStore.Next pair:learnedNext)if(pair.language.equals("zh"))chinese.rememberNext(pair.previous,pair.value,pair.hits,pair.updated);}}
@@ -46,7 +46,6 @@ final class Pinyin implements AutoCloseable {
         if(options.memory&&!privateField){long now=System.currentTimeMillis();List<LearningStore.Next> ranked=new ArrayList<>();for(LearningStore.Next item:learnedNext)if(item.language.equals(language)&&item.previous.equals(previous))ranked.add(item);ranked.sort(Comparator.comparingDouble((LearningStore.Next item)->LearningWeights.strength(item.hits,item.updated,now)).reversed().thenComparing(Comparator.comparingLong((LearningStore.Next item)->item.updated).reversed()));for(LearningStore.Next item:ranked)result.put(item.value,new Candidate(item.value,0,item.spelling));}
         for(LearningStore.Next item:defaults.getOrDefault(language+"\t"+previous,List.of()))result.putIfAbsent(item.value,new Candidate(item.value,0,item.spelling));
         if(language.equals("zh")&&!previous.isEmpty())for(ChineseEngine.Candidate c:chinese.continuations(previous))result.putIfAbsent(c.value,new Candidate(c.value,0,c.spelling));
-        if(result.isEmpty()&&previous.isEmpty()){if(language.equals("zh")){result.put("你好",new Candidate("你好",0,"ni hao"));result.put("谢谢",new Candidate("谢谢",0,"xie xie"));result.put("好的",new Candidate("好的",0,"hao de"));}else for(String word:List.of("hello","thanks","okay"))result.put(word,new Candidate(word,0,word));}
         List<Candidate> list=new ArrayList<>(result.values());return list.subList(0,Math.min(24,list.size()));
     }
     String context(String language,String before,String previous){if(!previous.isEmpty()&&before.endsWith(previous+(language.equals("en")?" ":"")))return previous;

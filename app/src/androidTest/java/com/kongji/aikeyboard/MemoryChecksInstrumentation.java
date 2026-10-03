@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 public final class MemoryChecksInstrumentation extends Instrumentation {
     private Pinyin pinyin;
     private Context isolated;
-    private int passed;
+    private int passed;private boolean keyboardSuite;
 
-    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments);keyboardSuite=arguments!=null&&"keyboard".equals(arguments.getString("suite")); start(); }
 
     private void check(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
@@ -32,6 +32,7 @@ public final class MemoryChecksInstrumentation extends Instrumentation {
 
     @Override public void onStart() {
         Bundle result = new Bundle();
+        if(keyboardSuite){try{result.putString("passed",Integer.toString(new KeyboardChecks(this).run()));finish(0,result);}catch(Throwable failure){result.putString("error",failure.toString());finish(1,result);}return;}
         isolated = new ContextWrapper(getTargetContext()) {
             @Override public Context getApplicationContext() { return this; }
             @Override public SharedPreferences getSharedPreferences(String name, int mode) {

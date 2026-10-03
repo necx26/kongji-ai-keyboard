@@ -34,9 +34,9 @@ final class HandwritingPanel extends LinearLayout implements AutoCloseable {
     HandwritingPanel(Context context,KeyboardStyle style,boolean chinese,Consumer<List<String>> results){
         super(context);this.results=results;setOrientation(VERTICAL);
         status=Ui.text(context,"在下面手写，停笔后显示候选",12,style.muted());addView(status);
-        pad=new Pad(context,style);pad.setContentDescription(Language.text(HandwritingPanel.this.getContext(),"手写区域"));addView(pad,new LayoutParams(-1,Ui.dp(context,180)));
+        pad=new Pad(context,style);pad.setContentDescription(Language.text(HandwritingPanel.this.getContext(),"手写区域"));addView(pad,new LayoutParams(-1,Ui.dp(context,style.height*4-4)));
         LinearLayout controls=Ui.row(context);
-        recognize=Ui.button(context,"识别",true,v->recognize());Ui.addButton(controls,recognize,1,38);
+        recognize=Ui.button(context,"识别",true,v->recognize());recognize.setEnabled(false);Ui.addButton(controls,recognize,1,38);
         Ui.addButton(controls,Ui.button(context,"撤销一笔",false,v->{pad.undo();changed();}),1,38);
         Ui.addButton(controls,Ui.button(context,"清除手写",false,v->clear()),1,38);
         Button download=Ui.button(context,"下载手写模型",false,v->download());Ui.addButton(controls,download,1.5f,38);addView(controls);
@@ -44,7 +44,7 @@ final class HandwritingPanel extends LinearLayout implements AutoCloseable {
             var id=DigitalInkRecognitionModelIdentifier.fromLanguageTag(chinese?"zh-Hani-CN":"en-US");
             if(id==null)throw new IllegalStateException("No handwriting model");
             model=DigitalInkRecognitionModel.builder(id).build();recognizer=DigitalInkRecognition.getClient(DigitalInkRecognizerOptions.builder(model).build());
-            RemoteModelManager.getInstance().isModelDownloaded(model).addOnSuccessListener(found->{if(closed)return;ready=found;recognize.setEnabled(ready);status.setText(Language.text(getContext(),found?"在下面手写，停笔后显示候选":"首次使用请下载手写模型，下载后可离线识别"));});
+            RemoteModelManager.getInstance().isModelDownloaded(model).addOnSuccessListener(found->{if(closed)return;ready=found;recognize.setEnabled(ready);status.setText(Language.text(getContext(),found?"在下面手写，停笔后显示候选":"首次使用请下载手写模型，下载后可离线识别"));if(ready&&!pad.strokes.isEmpty())recognize();});
         }catch(Exception e){status.setText(Language.text(HandwritingPanel.this.getContext(),"手写模型初始化失败，请重新打开键盘"));recognize.setEnabled(false);}
     }
 
@@ -58,6 +58,7 @@ final class HandwritingPanel extends LinearLayout implements AutoCloseable {
         recognizer.recognize(ink.build(),context).addOnSuccessListener(result->{if(closed||captured!=revision)return;List<String> choices=new ArrayList<>();for(var candidate:result.getCandidates()){String text=candidate.getText().trim();if(!text.isEmpty()&&!choices.contains(text))choices.add(text);if(choices.size()==12)break;}results.accept(choices);status.setText(Language.text(getContext(),choices.isEmpty()?"没有识别到文字，请重写":"点选候选文字确认输入"));}).addOnFailureListener(e->{if(!closed&&captured==revision)status.setText(Language.text(HandwritingPanel.this.getContext(),"手写识别失败，请重试"));});
     }
     void clear(){pad.strokes.clear();pad.paths.clear();pad.current=null;pad.live=null;pad.invalidate();changed();if(ready&&!closed)status.setText(Language.text(getContext(),"在下面手写，停笔后显示候选"));}
+    void resize(int height){pad.getLayoutParams().height=Ui.dp(getContext(),height*4-4);pad.requestLayout();}
     @Override public void close(){if(closed)return;closed=true;revision++;handler.removeCallbacksAndMessages(null);if(recognizer!=null)recognizer.close();}
 
     private final class Pad extends View {
