@@ -33,9 +33,11 @@ AI 回复采用以下流程：
 
 ## 安装与启用
 
-powershell
-'git clone https://github.com/necx26/kongji-ai-keyboard.git'
+```powershell
+git clone https://github.com/necx26/kongji-ai-keyboard.git
+```
 (先cd选择目录)
+
 
 ## 配置模型接口
 
