@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">"Kongji KI-Tastatur"</string>
+    <string name="reader_description">"Liest sichtbaren Text und Screenshots nur nach Antwort helfen. Vor dem Senden an Ihre API können Sie Inhalte prüfen. Keine Klicks, Nachrichten oder dauernde Überwachung."</string>
+    <string name="reader_name">Kongji AI Bildschirmleser</string>
+</resources>

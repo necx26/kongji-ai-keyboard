@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">"Teclado IA Kongji"</string>
+    <string name="reader_description">"Lee texto visible y capturas solo al tocar Ayúdame a responder. Revisa antes de enviar a tu API. No hace clic, envía mensajes ni vigila continuamente."</string>
+    <string name="reader_name">Lector de pantalla Kongji AI</string>
+</resources>

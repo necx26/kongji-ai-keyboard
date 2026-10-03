@@ -1,0 +1,10 @@
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="100"
+    android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
+    android:isAccessibilityTool="false"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:description="@string/reader_description"
+    android:settingsActivity="com.kongji.aikeyboard.SettingsActivity" />

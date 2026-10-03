@@ -1,0 +1,30 @@
+# Locally authored next-word defaults; language, previous, next, spelling, weight.
+zh	你好	呀	ya	100
+zh	你好	很高兴认识你	hen gao xing ren shi ni	90
+zh	我	想	xiang	100
+zh	我	是	shi	90
+zh	我	今天	jin tian	80
+zh	我们	一起	yi qi	100
+zh	我们	去	qu	90
+zh	我们	可以	ke yi	80
+zh	今天	下午	xia wu	100
+zh	今天	晚上	wan shang	90
+zh	明天	见	jian	100
+zh	明天	下午	xia wu	90
+zh	谢谢	你	ni	100
+zh	好的	没问题	mei wen ti	100
+zh	喜欢	你	ni	100
+zh	喝	咖啡	ka fei	100
+zh	去	北京	bei jing	100
+en	hello	world	world	100
+en	hello	there	there	90
+en	good	morning	morning	100
+en	good	night	night	90
+en	good	luck	luck	80
+en	thank	you	you	100
+en	see	you	you	100
+en	i	am	am	100
+en	i	will	will	90
+en	i	think	think	80
+en	thank you	very	very	100
+en	very	much	much	100

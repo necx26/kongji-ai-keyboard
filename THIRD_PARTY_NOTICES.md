@@ -23,3 +23,7 @@
 `gradlew`、`gradlew.bat` 和 `gradle/wrapper` 使用 Gradle 9.3.1 的官方生成工具生成；Gradle 项目采用 Apache License 2.0。参见 [Gradle 官方源码与许可证](https://github.com/gradle/gradle)。它是构建工具，不打包进输入法运行时。
 
 HeliBoard 与 FlorisBoard 的链接用于布局设计参考，本项目没有复制它们的代码或资源。
+
+## Google ML Kit 手写识别
+
+运行时依赖 `com.google.mlkit:digital-ink-recognition:19.0.0`，从 Google Maven 获取。手写模型由用户首次点击下载后保存在设备，识别笔画在本机执行。当前接入中文和英文模型，不随项目源码复制模型文件。参见 [Google 官方 Android 手写识别文档](https://developers.google.com/ml-kit/vision/digital-ink-recognition/android)。第三方 SDK 和模型保留其各自的条款，不由本项目的源码许可覆盖。

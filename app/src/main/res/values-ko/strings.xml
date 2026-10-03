@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">"Kongji AI 키보드"</string>
+    <string name="reader_description">"답장 도우미를 눌렀을 때만 보이는 텍스트와 캡처를 읽습니다. 설정한 API로 보내기 전에 확인할 수 있습니다. 자동 클릭, 메시지 전송, 지속적인 감시는 하지 않습니다."</string>
+    <string name="reader_name">Kongji AI 화면 읽기</string>
+</resources>

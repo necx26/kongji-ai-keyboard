@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">"控機 AI キーボード"</string>
+    <string name="reader_description">"返信を手伝ってをタップした時だけ表示中の文字と画像を読み取ります。設定した API に送る前に内容を確認できます。自動クリック、送信、継続的な監視は行いません。"</string>
+    <string name="reader_name">Kongji AI 画面読み取り</string>
+</resources>

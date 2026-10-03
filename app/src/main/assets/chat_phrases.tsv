@@ -1,0 +1,39 @@
+# Locally authored conversational phrases. Format: text, syllables, relative weight.
+你好	ni hao	120000
+你好吗	ni hao ma	60000
+谢谢	 xie xie	120000
+谢谢你	xie xie ni	90000
+好的	hao de	100000
+没问题	mei wen ti	100000
+知道了	zhi dao le	90000
+不好意思	bu hao yi si	90000
+我知道了	wo zhi dao le	60000
+我们	wo men	350000
+你们	ni men	180000
+他们	ta men	180000
+她们	ta men	90000
+我想	wo xiang	80000
+我想你	wo xiang ni	50000
+我喜欢	wo xi huan	60000
+今天下午	jin tian xia wu	60000
+明天下午	ming tian xia wu	60000
+今天晚上	jin tian wan shang	60000
+明天晚上	ming tian wan shang	60000
+明天见	ming tian jian	60000
+再见	zai jian	90000
+喝咖啡	he ka fei	50000
+一起	 yi qi	110000
+一起去	yi qi qu	60000
+有时间	you shi jian	50000
+什么时候	shen me shi hou	110000
+怎么样	zen me yang	100000
+为什么	wei shen me	100000
+可以的	ke yi de	60000
+没关系	mei guan xi	80000
+辛苦了	xin ku le	80000
+收到	shou dao	100000
+晚安	wan an	80000
+早上好	zao shang hao	80000
+下午好	xia wu hao	60000
+很高兴认识你	hen gao xing ren shi ni	60000
+我爱你	wo ai ni	80000

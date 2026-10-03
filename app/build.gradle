@@ -1,0 +1,24 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.kongji.aikeyboard'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.kongji.aikeyboard'
+        minSdk 30
+        targetSdk 35
+        versionCode 6
+        versionName '0.4.0'
+        testInstrumentationRunner 'com.kongji.aikeyboard.MemoryChecksInstrumentation'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError true }
+    bundle { language { enableSplit = false } }
+}
+
+dependencies {
+    implementation 'com.google.mlkit:digital-ink-recognition:19.0.0'
+}

@@ -1,0 +1,15 @@
+{
+  "version": "0.3.1",
+  "apk_bytes": 3311517,
+  "sha256": "ab8f971cc6e9218d026e5a97a1ea19f6689c3d408d0253a0ee59d5f9341b8514",
+  "engine_assertions": 30,
+  "ui": [
+    "ek 候选选择可是，确认前保留原文",
+    "ekshi 候选选择可是，确认前保留原文",
+    "kwshi 候选选择可是，确认前保留原文",
+    "错序输入先选可是，剩余拼音保留并继续选词",
+    "关闭中文纠错后 ek 不再匹配可是"
+  ],
+  "lint": "0 errors, 21 warnings",
+  "installed_hash_matches": true
+}

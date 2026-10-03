@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">控机 AI 输入法</string>
+    <string name="reader_description">只有点击输入法中的“帮我回答”时，才读取当前应用可见文字和截图。你可以预览、修改内容，再决定是否提交到自己配置的模型接口。不会自动点击、发送消息或持续监控屏幕。</string>
+    <string name="reader_name">控机 AI 屏幕读取</string>
+</resources>

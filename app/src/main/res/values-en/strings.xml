@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">"Kongji AI Keyboard"</string>
+    <string name="reader_description">"Reads visible text and screenshots only after you tap Help me reply. Preview and review the content before sending it to your configured API. Does not click, send messages or continuously monitor the screen."</string>
+    <string name="reader_name">Kongji AI screen reader</string>
+</resources>
