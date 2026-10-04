@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 public final class MemoryChecksInstrumentation extends Instrumentation {
     private Pinyin pinyin;
     private Context isolated;
-    private int passed;private boolean keyboardSuite;
+    private int passed;private boolean keyboardSuite,draftSuite,layoutSuite;private String clipboardFixture;private boolean overlapSuite;
 
-    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments);keyboardSuite=arguments!=null&&"keyboard".equals(arguments.getString("suite")); start(); }
+    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments);overlapSuite=arguments!=null&&"overlap".equals(arguments.getString("suite"));keyboardSuite=arguments!=null&&"keyboard".equals(arguments.getString("suite"));draftSuite=arguments!=null&&"draft".equals(arguments.getString("suite"));layoutSuite=arguments!=null&&"layout".equals(arguments.getString("suite"));clipboardFixture=arguments==null?null:arguments.getString("clipboard64"); start(); }
 
     private void check(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
@@ -32,6 +32,10 @@ public final class MemoryChecksInstrumentation extends Instrumentation {
 
     @Override public void onStart() {
         Bundle result = new Bundle();
+        if(clipboardFixture!=null){runOnMainSync(()->{String text=new String(android.util.Base64.decode(clipboardFixture,android.util.Base64.DEFAULT),java.nio.charset.StandardCharsets.UTF_8);getTargetContext().getSystemService(android.content.ClipboardManager.class).setPrimaryClip(android.content.ClipData.newPlainText("keyboard test",text));});result.putString("clipboard","set");finish(0,result);return;}
+        if(overlapSuite){try{result.putString("passed",Integer.toString(new OverlapChecks(this).run()));finish(0,result);}catch(Throwable failure){result.putString("error",failure.toString());finish(1,result);}return;}
+        if(layoutSuite){try{result.putString("passed",Integer.toString(new LayoutChecks(this).run()));finish(0,result);}catch(Throwable failure){result.putString("error",failure.toString());finish(1,result);}return;}
+        if(draftSuite){try{result.putString("passed",Integer.toString(new DraftUndoChecks(this).run()));finish(0,result);}catch(Throwable failure){result.putString("error",failure.toString());finish(1,result);}return;}
         if(keyboardSuite){try{result.putString("passed",Integer.toString(new KeyboardChecks(this).run()));finish(0,result);}catch(Throwable failure){result.putString("error",failure.toString());finish(1,result);}return;}
         isolated = new ContextWrapper(getTargetContext()) {
             @Override public Context getApplicationContext() { return this; }

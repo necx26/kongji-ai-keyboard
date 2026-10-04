@@ -33,10 +33,10 @@ final class Ui {
         b.setTextSize(15);
         android.graphics.drawable.Drawable arrow=new android.graphics.drawable.Drawable(){
             final android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-            @Override public void draw(android.graphics.Canvas canvas){android.graphics.Rect bounds=getBounds();paint.setColor(muted(c));paint.setStrokeWidth(dp(c,1.2f));paint.setStyle(android.graphics.Paint.Style.STROKE);
-                float x=bounds.centerX(),y=bounds.centerY();android.graphics.Path path=new android.graphics.Path();path.moveTo(x-2,y-4);path.lineTo(x+2,y);path.lineTo(x-2,y+4);canvas.drawPath(path,paint);}
+            @Override public void draw(android.graphics.Canvas canvas){android.graphics.Rect bounds=getBounds();paint.setColor(muted(c));paint.setStrokeWidth(dp(c,1.6f));paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);paint.setStrokeJoin(android.graphics.Paint.Join.ROUND);paint.setStyle(android.graphics.Paint.Style.STROKE);
+                float x=bounds.centerX(),y=bounds.centerY(),halfWidth=dp(c,3.5f),halfHeight=dp(c,7);android.graphics.Path path=new android.graphics.Path();path.moveTo(x-halfWidth,y-halfHeight);path.lineTo(x+halfWidth,y);path.lineTo(x-halfWidth,y+halfHeight);canvas.drawPath(path,paint);}
             @Override public void setAlpha(int a){}@Override public void setColorFilter(android.graphics.ColorFilter f){}@Override public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}
-        };arrow.setBounds(0,0,dp(c,14),dp(c,18));b.setCompoundDrawablesRelative(null,null,arrow,null);return b;
+        };arrow.setBounds(0,0,dp(c,20),dp(c,24));b.setCompoundDrawablesRelative(null,null,arrow,null);return b;
     }
     static LinearLayout column(Context c){LinearLayout l=new LinearLayout(c);l.setOrientation(LinearLayout.VERTICAL);return l;}
     static LinearLayout row(Context c){LinearLayout l=new LinearLayout(c);l.setOrientation(LinearLayout.HORIZONTAL);l.setBaselineAligned(false);return l;}

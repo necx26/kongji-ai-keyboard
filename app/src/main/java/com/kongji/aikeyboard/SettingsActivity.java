@@ -20,11 +20,11 @@ public class SettingsActivity extends LocalizedActivity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(Ui.bg(this));
         LinearLayout page=Ui.column(this);int p=Ui.dp(this,20);page.setPadding(p,p,p,p);scroll.addView(page);setContentView(scroll);Ui.activityInsets(scroll,0);
-        page.addView(Ui.text(this,"KONGJI · AI KEYBOARD",12,Ui.ACCENT));
+        page.addView(Ui.text(this,"❤❤❤",12,Ui.ACCENT));
         page.addView(Ui.heading(this,"控机 AI 输入法",28));
         page.addView(Ui.text(this,"读取屏幕~帮回。",15,Ui.MUTED));
         status=Ui.text(this,"",14,Ui.ACCENT);page.addView(status);
-        Ui.rule(page);add(page,"私人定制键盘外观",v->startActivity(new Intent(this,AppearanceActivity.class)),false);
+        Ui.rule(page);add(page,"外观",v->startActivity(new Intent(this,AppearanceActivity.class)),false);
         appearanceSummary=Ui.text(this,"",12,Ui.MUTED);page.addView(appearanceSummary);
         add(page,"输入与词库设置",v->startActivity(new Intent(this,InputSettingsActivity.class)),false);
         add(page,"应用语言",v->startActivity(new Intent(this,LanguageActivity.class)),false);

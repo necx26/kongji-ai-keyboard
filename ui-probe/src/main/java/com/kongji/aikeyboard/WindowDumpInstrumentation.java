@@ -23,6 +23,14 @@ public class WindowDumpInstrumentation extends Instrumentation {
             info.flags|=AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
             automation.setServiceInfo(info);
             Thread.sleep(120);
+            if(arguments!=null&&arguments.containsKey("overlap")){
+                String[] values=arguments.getString("overlap").split(",");float[] points=new float[values.length];for(int i=0;i<values.length;i++)points[i]=Float.parseFloat(values[i]);
+                long down=android.os.SystemClock.uptimeMillis();int count=points.length/2;
+                multi(automation,down,android.view.MotionEvent.ACTION_DOWN,1,points);Thread.sleep(25);
+                for(int n=2;n<=count;n++){multi(automation,down,android.view.MotionEvent.ACTION_POINTER_DOWN|((n-1)<<8),n,points);Thread.sleep(25);}
+                for(int n=count;n>1;n--){multi(automation,down,android.view.MotionEvent.ACTION_POINTER_UP|((n-1)<<8),n,points);Thread.sleep(25);}
+                multi(automation,down,android.view.MotionEvent.ACTION_UP,1,points);Thread.sleep(200);result.putString("overlap","injected");
+            }
             if(arguments!=null&&arguments.containsKey("gesture")){
                 String[] values=arguments.getString("gesture").split(",");float x=Float.parseFloat(values[0]),y=Float.parseFloat(values[1]),endX=Float.parseFloat(values[2]),endY=Float.parseFloat(values[3]);int hold=Integer.parseInt(values[4]);
                 long down=android.os.SystemClock.uptimeMillis();inject(automation,down,android.view.MotionEvent.ACTION_DOWN,x,y);
@@ -47,6 +55,7 @@ public class WindowDumpInstrumentation extends Instrumentation {
         } catch(Exception e){result.putString("error",e.toString());finish(1,result);}
     }
     private static void inject(UiAutomation automation,long down,int action,float x,float y){android.view.MotionEvent e=android.view.MotionEvent.obtain(down,android.os.SystemClock.uptimeMillis(),action,x,y,0);e.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);try{if(!automation.injectInputEvent(e,true))throw new IllegalStateException("touch injection failed");}finally{e.recycle();}}
+    private static void multi(UiAutomation automation,long down,int action,int count,float[] points){android.view.MotionEvent.PointerProperties[] properties=new android.view.MotionEvent.PointerProperties[count];android.view.MotionEvent.PointerCoords[] coordinates=new android.view.MotionEvent.PointerCoords[count];for(int i=0;i<count;i++){properties[i]=new android.view.MotionEvent.PointerProperties();properties[i].id=i+3;properties[i].toolType=android.view.MotionEvent.TOOL_TYPE_FINGER;coordinates[i]=new android.view.MotionEvent.PointerCoords();coordinates[i].x=points[i*2];coordinates[i].y=points[i*2+1];coordinates[i].pressure=1;coordinates[i].size=1;}android.view.MotionEvent event=android.view.MotionEvent.obtain(down,android.os.SystemClock.uptimeMillis(),action,count,properties,coordinates,0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);try{if(!automation.injectInputEvent(event,true))throw new IllegalStateException("multi-touch injection failed");}finally{event.recycle();}}
     private static String editable(AccessibilityNodeInfo node,int depth){if(depth>80)return null;if(node.isEditable()&&!node.isPassword())return node.getText()==null?"":node.getText().toString();for(int i=0;i<node.getChildCount();i++){AccessibilityNodeInfo child=android.os.Build.VERSION.SDK_INT>=33?node.getChild(i,0):node.getChild(i);if(child!=null){String text=editable(child,depth+1);if(text!=null)return text;}}return null;}
     private boolean setField(AccessibilityNodeInfo node,String description,String value,int depth){
         if(depth>80||!node.isVisibleToUser())return false;

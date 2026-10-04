@@ -58,6 +58,7 @@ final class HandwritingPanel extends LinearLayout implements AutoCloseable {
         recognizer.recognize(ink.build(),context).addOnSuccessListener(result->{if(closed||captured!=revision)return;List<String> choices=new ArrayList<>();for(var candidate:result.getCandidates()){String text=candidate.getText().trim();if(!text.isEmpty()&&!choices.contains(text))choices.add(text);if(choices.size()==12)break;}results.accept(choices);status.setText(Language.text(getContext(),choices.isEmpty()?"没有识别到文字，请重写":"点选候选文字确认输入"));}).addOnFailureListener(e->{if(!closed&&captured==revision)status.setText(Language.text(HandwritingPanel.this.getContext(),"手写识别失败，请重试"));});
     }
     void clear(){pad.strokes.clear();pad.paths.clear();pad.current=null;pad.live=null;pad.invalidate();changed();if(ready&&!closed)status.setText(Language.text(getContext(),"在下面手写，停笔后显示候选"));}
+    boolean hasInk(){return !pad.strokes.isEmpty()||pad.current!=null;}
     void resize(int height){pad.getLayoutParams().height=Ui.dp(getContext(),height*4-4);pad.requestLayout();}
     @Override public void close(){if(closed)return;closed=true;revision++;handler.removeCallbacksAndMessages(null);if(recognizer!=null)recognizer.close();}
 

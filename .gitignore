@@ -2,6 +2,7 @@
 **/build/
 local.properties
 .tools/
+.codex-remote-attachments/
 *.jks
 *.keystore
 .idea/

@@ -3,8 +3,8 @@
   "versionCode": 7,
   "package": "com.kongji.aikeyboard",
   "apk": "D:\\控机大师\\release\\控机AI输入法-v0.5.0.apk",
-  "bytes": 41557541,
-  "sha256": "dd85bb6d5828452500e1dad0662bd071476a61291bc933e302e00b1fd274cd03",
+  "bytes": 41362907,
+  "sha256": "9e33f3b2127907d8b380e94ed71c6bc1b5549cc7a9a6c18e7668b38e0faa74c5",
   "minSdk": 30,
   "targetSdk": 35,
   "compileSdk": 36,
@@ -39,5 +39,6 @@
   "realDeviceValidated": false,
   "realModelApiCalled": false,
   "signing": "debug; local installation build",
-  "date": "2026-10-03"
+  "date": "2026-10-03",
+  "arrowUiBuildDate": "2026-10-04"
 }

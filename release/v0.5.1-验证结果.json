@@ -1,0 +1,49 @@
+{
+  "version": "0.5.1",
+  "versionCode": 8,
+  "package": "com.kongji.aikeyboard",
+  "date": "2026-10-04",
+  "apk": "D:\\控机大师\\release\\控机AI输入法-v0.5.1.apk",
+  "bytes": 41587741,
+  "sha256": "482fff32b1bdcbe95d6135a9e08e48cf22cc3c212374902fc495446a0af9ee3f",
+  "build": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 21
+  },
+  "keyboardChecksPassed": 46,
+  "draftUndoChecksPassed": 15,
+  "uiCasesPassed": 17,
+  "uiCases": [
+    "idle toolbar visible; both explanatory rows removed",
+    "typing swaps tools for candidates without moving the keys",
+    "up-swipe clears entire composing draft and restores toolbar",
+    "down-swipe restores pinyin and candidates",
+    "restored composing span accepts more letters without duplicate text",
+    "undo never overwrites text pasted after clear",
+    "mid-cursor multiline Unicode clear/undo; repeated empty clear retains undo",
+    "normal arrow tap still performs enter",
+    "typing after clear invalidates previous undo",
+    "hiding input method drops pending restore",
+    "English typing uses the same candidate row",
+    "English draft undo preserves composing text",
+    "nine-key typing swaps tools for Chinese candidates",
+    "nine-key clear/undo restores remaining composition and candidate selection",
+    "handwriting candidates share the top row; choosing returns to tools",
+    "handwriting mode enter arrow clears and restores committed text",
+    "26-key layout restored after checks"
+  ],
+  "uiSuiteCompleted": true,
+  "uiRuntime": "Android 36 / Pixel 6 emulator",
+  "realDeviceValidated": false,
+  "realModelApiCalled": false,
+  "baseValidation": {
+    "version": "0.5.0",
+    "engineChecks": 43,
+    "sqliteMemoryChecks": 16,
+    "rerunForThisUiChange": false
+  },
+  "clearUndo": "full input-field text; restoring composing range and original cursor; rejects new content and another editor",
+  "undoStorage": "temporary memory, cleared on hidden keyboard, changed editor/mode or service destruction",
+  "signature": "local debug keystore; cover-install upgrade validated"
+}

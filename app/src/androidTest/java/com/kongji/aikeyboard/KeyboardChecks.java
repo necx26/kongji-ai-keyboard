@@ -23,15 +23,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class KeyboardChecks {
     private final Instrumentation instrumentation;private int passed;private Activity activity;
     private Button letter,delete;private LinearLayout page;private final AtomicInteger letters=new AtomicInteger(),symbols=new AtomicInteger(),deleted=new AtomicInteger();
+    private final java.util.List<Long> deletionTimes=java.util.Collections.synchronizedList(new java.util.ArrayList<>());
+    private void deletion(){deletionTimes.add(SystemClock.uptimeMillis());deleted.incrementAndGet();}
     private final KeyboardStyle style=new KeyboardStyle();
     KeyboardChecks(Instrumentation i){instrumentation=i;}
     private void check(boolean condition,String message){if(!condition)throw new AssertionError(message);passed++;}
     private void touch(View view,int action,float x,float y){Runnable send=()->{long now=SystemClock.uptimeMillis();MotionEvent event=MotionEvent.obtain(now,now,action,x,y,0);view.dispatchTouchEvent(event);event.recycle();};if(android.os.Looper.myLooper()==android.os.Looper.getMainLooper())send.run();else instrumentation.runOnMainSync(send);}
     private String bubble()throws Exception{Field f=Glass.Key.class.getDeclaredField("bubble");f.setAccessible(true);TextView text=(TextView)f.get(letter);return text==null?"":text.getText().toString();}
+    private void checkBubbleFit()throws Exception{Field f=Glass.Key.class.getDeclaredField("bubble");f.setAccessible(true);TextView text=(TextView)f.get(letter);boolean[] fits=new boolean[1];instrumentation.runOnMainSync(()->fits[0]=text.getLayout()!=null&&text.getLayout().getLineWidth(0)<=text.getWidth()-Ui.dp(activity,4)+1);check(fits[0],"gesture preview label fits the compact bubble");}
     int run()throws Exception{
         activity=instrumentation.startActivitySync(new Intent(instrumentation.getTargetContext(),SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         instrumentation.runOnMainSync(()->{page=Ui.column(activity);page.setPadding(0,Ui.dp(activity,90),0,0);activity.setContentView(page);letter=Glass.button(activity,style,"q",false,false,v->letters.incrementAndGet());Glass.shortcut(letter,"1",symbols::incrementAndGet);page.addView(letter,new LinearLayout.LayoutParams(160,150));
-            delete=Glass.button(activity,style,"⌫",false,false,v->deleted.incrementAndGet());Glass.repeat(delete,deleted::incrementAndGet);page.addView(delete,new LinearLayout.LayoutParams(160,150));});
+            delete=Glass.button(activity,style,"⌫",false,false,v->deletion());Glass.repeat(delete,this::deletion);page.addView(delete,new LinearLayout.LayoutParams(160,150));});
         instrumentation.waitForIdleSync();
         try{
             touch(letter,MotionEvent.ACTION_DOWN,50,70);instrumentation.waitForIdleSync();check(letters.get()==0,"press must not output");check(bubble().equals("q"),"letter preview at press");
@@ -46,10 +49,10 @@ final class KeyboardChecks {
             touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_CANCEL,50,70);check(letters.get()==4&&bubble().isEmpty(),"cancel emits nothing and dismisses popup");
             checkOwnerPointer();
             touch(delete,MotionEvent.ACTION_DOWN,50,70);check(deleted.get()==0,"delete press waits");touch(delete,MotionEvent.ACTION_UP,50,70);check(deleted.get()==1,"delete tap removes one character");
-            touch(delete,MotionEvent.ACTION_DOWN,50,70);SystemClock.sleep(620);int count=deleted.get();check(count>=4&&count<=6,"hold removes single characters at 75ms intervals");touch(delete,MotionEvent.ACTION_UP,50,70);check(deleted.get()==count,"release after hold does not add deletion");SystemClock.sleep(200);check(deleted.get()==count,"repeat stops on release");
+            touch(delete,MotionEvent.ACTION_DOWN,50,70);long deadline=SystemClock.uptimeMillis()+2500;while(deleted.get()<4&&SystemClock.uptimeMillis()<deadline)SystemClock.sleep(25);int count=deleted.get();check(count>=4,"hold repeats individual deletions: "+count);boolean paced=true;for(int i=2;i<deletionTimes.size();i++)if(deletionTimes.get(i)-deletionTimes.get(i-1)<65)paced=false;check(paced,"repeated deletion does not accelerate beyond the 75ms cadence");int[] atRelease=new int[1];instrumentation.runOnMainSync(()->{atRelease[0]=deleted.get();touch(delete,MotionEvent.ACTION_UP,50,70);});count=atRelease[0];check(deleted.get()==count,"release after hold does not add deletion");SystemClock.sleep(200);check(deleted.get()==count,"repeat stops on release");
             touch(delete,MotionEvent.ACTION_DOWN,50,70);SystemClock.sleep(410);touch(delete,MotionEvent.ACTION_CANCEL,50,70);count=deleted.get();SystemClock.sleep(180);check(deleted.get()==count,"repeat stops on cancellation");
             touch(delete,MotionEvent.ACTION_DOWN,50,70);instrumentation.runOnMainSync(()->page.removeView(delete));count=deleted.get();SystemClock.sleep(450);check(deleted.get()==count,"detach cancels hold timer");
-            checkGeometry();checkPhoto();return passed;
+            checkGeometry();checkPhoto();checkVerticalActions();return passed;
         }finally{instrumentation.runOnMainSync(()->{Glass.cancelTouches(page);activity.finish();});}
     }
     private void checkPopupLocation()throws Exception{Field field=Glass.Key.class.getDeclaredField("bubble");field.setAccessible(true);TextView bubble=(TextView)field.get(letter);int[] bounds=new int[4];instrumentation.runOnMainSync(()->{int[] key=new int[2],popup=new int[2];letter.getLocationOnScreen(key);bubble.getLocationOnScreen(popup);bounds[0]=key[1];bounds[1]=popup[1];bounds[2]=bubble.getWidth();bounds[3]=bubble.getHeight();});
@@ -59,6 +62,17 @@ final class KeyboardChecks {
         MotionEvent.PointerCoords one=new MotionEvent.PointerCoords(),two=new MotionEvent.PointerCoords();one.x=50;one.y=70;two.x=100;two.y=70;one.pressure=two.pressure=1;
         long now=SystemClock.uptimeMillis();MotionEvent event=MotionEvent.obtain(now,now,MotionEvent.ACTION_POINTER_UP,2,new MotionEvent.PointerProperties[]{first,second},new MotionEvent.PointerCoords[]{one,two},0,0,1,1,0,0,android.view.InputDevice.SOURCE_TOUCHSCREEN,0);letter.dispatchTouchEvent(event);event.recycle();
     });check(letters.get()==5,"owner finger release commits once during multi-touch");touch(letter,MotionEvent.ACTION_UP,100,70);check(letters.get()==5,"another finger release cannot commit the old key twice");}
+    private void checkVerticalActions()throws Exception{AtomicInteger enters=new AtomicInteger(),clears=new AtomicInteger(),undos=new AtomicInteger();
+        instrumentation.runOnMainSync(()->{letter=KeyboardLayout.deleteKey(activity,style,enters::incrementAndGet,clears::incrementAndGet,undos::incrementAndGet);page.addView(letter,new LinearLayout.LayoutParams(160,150));});instrumentation.waitForIdleSync();
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,-30);check(bubble().isEmpty()&&clears.get()==0,"delete swipe has no preview and waits for release");touch(letter,MotionEvent.ACTION_UP,50,-30);check(clears.get()==1&&enters.get()==0,"delete up swipe does not mix with ordinary deletion");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,170);check(bubble().isEmpty()&&undos.get()==0,"undo swipe has no preview and waits for release");touch(letter,MotionEvent.ACTION_UP,50,170);check(undos.get()==1&&enters.get()==0,"delete down swipe restores without deleting a character");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,-30);touch(letter,MotionEvent.ACTION_MOVE,50,70);touch(letter,MotionEvent.ACTION_UP,50,70);check(enters.get()==1&&clears.get()==1,"returning enter gesture to origin performs normal enter");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,220,20);touch(letter,MotionEvent.ACTION_UP,220,20);check(enters.get()==2&&clears.get()==1,"horizontal travel is not a clear gesture");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,170);touch(letter,MotionEvent.ACTION_CANCEL,50,170);check(undos.get()==1&&enters.get()==2,"cancelled enter gesture performs neither action");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,-30);SystemClock.sleep(500);check(enters.get()==2,"holding a selected swipe suspends repeated deletion");touch(letter,MotionEvent.ACTION_UP,50,-30);check(clears.get()==2,"held swipe commits recent deletion once");
+        touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_MOVE,50,60);SystemClock.sleep(450);check(enters.get()==2,"slow vertical travel pauses repetition before reaching swipe threshold");touch(letter,MotionEvent.ACTION_MOVE,50,-30);touch(letter,MotionEvent.ACTION_UP,50,-30);check(clears.get()==3,"slow swipe still commits one recent deletion");
+        instrumentation.runOnMainSync(()->{letter=KeyboardLayout.enterKey(activity,style,enters::incrementAndGet);page.addView(letter,new LinearLayout.LayoutParams(160,150));});instrumentation.waitForIdleSync();touch(letter,MotionEvent.ACTION_DOWN,50,70);touch(letter,MotionEvent.ACTION_UP,50,-30);check(enters.get()==3&&clears.get()==3&&undos.get()==1,"enter key has no recent-delete or undo gesture");
+    }
     private void checkGeometry(){instrumentation.runOnMainSync(()->{
         KeyboardFrame preview=new KeyboardFrame(activity,style,true);LinearLayout keys=Ui.column(activity);View child=new View(activity);keys.addView(child,new LinearLayout.LayoutParams(-1,Ui.dp(activity,200)));preview.addView(keys);page.addView(preview);
         int w=Ui.dp(activity,350);preview.measure(View.MeasureSpec.makeMeasureSpec(w,View.MeasureSpec.EXACTLY),0);preview.layout(0,0,w,preview.getMeasuredHeight());RectF before=preview.keyboardBounds();preview.setEditing(true);

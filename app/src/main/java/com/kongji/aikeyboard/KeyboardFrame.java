@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.graphics.Rect;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +15,47 @@ final class KeyboardFrame extends ViewGroup {
     private KeyboardStyle style;private final boolean editor;private boolean editing,dragging,resizing;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);private final RectF box=new RectF();
     private float startX,startY,startWidth,startHorizontal;private int startLift,startHeight;
+    private View touchOwner;private final Rect ownerBounds=new Rect();private int activePointer=-1;private float lastX,lastY;private long pointerDown;
     KeyboardFrame(Context context,KeyboardStyle value,boolean editor){super(context);style=value;this.editor=editor;setWillNotDraw(false);setClipChildren(false);setContentDescription(Language.text(context,"键盘位置预览"));}
     void setStyle(KeyboardStyle value){style=value;requestLayout();invalidate();}
     void setEditing(boolean value){editing=value;Glass.cancelTouches(this);requestLayout();invalidate();}
     boolean editing(){return editing;}
     RectF keyboardBounds(){return new RectF(box);}
+    View nearestKey(float x,float y){if(!box.contains(x,y)||getChildCount()==0||overInk(getChildAt(0),x,y))return null;View[] best={null};float[] distance={Float.MAX_VALUE};nearest(getChildAt(0),x,y,best,distance);return best[0];}
+    private boolean overInk(View view,float x,float y){if(view instanceof HandwritingPanel){Rect rect=new Rect(0,0,view.getWidth(),view.getHeight());offsetDescendantRectToMyCoords(view,rect);return rect.contains((int)x,(int)y);}if(view instanceof ViewGroup group)for(int i=0;i<group.getChildCount();i++)if(overInk(group.getChildAt(i),x,y))return true;return false;}
+    private void nearest(View view,float x,float y,View[] best,float[] distance){
+        if(view.getVisibility()!=VISIBLE)return;
+        if(view instanceof Glass.Key&&view.isEnabled()){Rect rect=new Rect(0,0,view.getWidth(),view.getHeight());offsetDescendantRectToMyCoords(view,rect);float dx=Math.max(Math.max(rect.left-x,0),x-rect.right),dy=Math.max(Math.max(rect.top-y,0),y-rect.bottom);float score=dx*dx+dy*dy;if(score<distance[0]){distance[0]=score;best[0]=view;}return;}
+        if(view instanceof ViewGroup group)for(int i=0;i<group.getChildCount();i++)nearest(group.getChildAt(i),x,y,best,distance);
+    }
+    @Override public boolean dispatchTouchEvent(MotionEvent event){
+        if(editor&&editing)return super.dispatchTouchEvent(event);
+        int action=event.getActionMasked(),index=event.getActionIndex();
+        if(action==MotionEvent.ACTION_DOWN){cancelOwner(event);if(!startPointer(event,index))return super.dispatchTouchEvent(event);return true;}
+        if(action==MotionEvent.ACTION_POINTER_DOWN){
+            float x=event.getX(index),y=event.getY(index);
+            if(nearestKey(x,y)!=null){
+                // Confirm the older press before resolving the newer key: confirmation
+                // can rebuild the layout (for example after a one-shot shift).
+                if(touchOwner instanceof Glass.Key key){touchOwner=null;activePointer=-1;key.confirmPending();}
+                if(isLayoutRequested()&&getWidth()>0){measure(MeasureSpec.makeMeasureSpec(getWidth(),MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(0,MeasureSpec.UNSPECIFIED));layout(getLeft(),getTop(),getRight(),getTop()+getMeasuredHeight());}
+                startPointer(event,index);return true;
+            }
+        }
+        if(touchOwner!=null){int i=event.findPointerIndex(activePointer);
+            if(action==MotionEvent.ACTION_CANCEL||i<0){cancelOwner(event);return true;}
+            if(action==MotionEvent.ACTION_MOVE){lastX=event.getX(i);lastY=event.getY(i);send(event,MotionEvent.ACTION_MOVE,lastX,lastY);}
+            else if((action==MotionEvent.ACTION_POINTER_UP||action==MotionEvent.ACTION_UP)&&event.getPointerId(index)==activePointer){lastX=event.getX(index);lastY=event.getY(index);send(event,MotionEvent.ACTION_UP,lastX,lastY);touchOwner=null;activePointer=action==MotionEvent.ACTION_UP?-1:-2;}
+            return true;
+        }
+        // Fingers belonging to already confirmed presses cannot emit a second time.
+        if(activePointer==-2){if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)activePointer=-1;return true;}
+        return super.dispatchTouchEvent(event);
+    }
+    private boolean startPointer(MotionEvent event,int index){touchOwner=nearestKey(event.getX(index),event.getY(index));if(touchOwner==null)return false;activePointer=event.getPointerId(index);pointerDown=event.getEventTime();lastX=event.getX(index);lastY=event.getY(index);ownerBounds.set(0,0,touchOwner.getWidth(),touchOwner.getHeight());offsetDescendantRectToMyCoords(touchOwner,ownerBounds);send(event,MotionEvent.ACTION_DOWN,lastX,lastY);return true;}
+    private void send(MotionEvent event,int action,float x,float y){View owner=touchOwner;if(owner==null)return;MotionEvent local=MotionEvent.obtain(pointerDown,event.getEventTime(),action,x-ownerBounds.left,y-ownerBounds.top,event.getMetaState());owner.dispatchTouchEvent(local);local.recycle();if(action==MotionEvent.ACTION_UP)activePointer=-2;}
+    private void cancelOwner(MotionEvent event){if(touchOwner!=null)send(event,MotionEvent.ACTION_CANCEL,lastX,lastY);touchOwner=null;activePointer=-1;}
+    @Override protected void onDetachedFromWindow(){touchOwner=null;activePointer=-1;Glass.cancelTouches(this);super.onDetachedFromWindow();}
     @Override protected void onMeasure(int w,int h){
         int width=MeasureSpec.getSize(w),childWidth=Math.round(width*KeyboardStyle.limit(style.width,.82f,1));
         if(getChildCount()==0){setMeasuredDimension(width,0);return;}
@@ -50,7 +87,7 @@ final class KeyboardFrame extends ViewGroup {
     }
     @Override public boolean performClick(){return super.performClick();}
     private void updateRowHeights(){if(getChildCount()==0||!(getChildAt(0) instanceof LinearLayout rows))return;
-        for(int i=0;i<rows.getChildCount();i++){if(rows.getChildAt(i) instanceof HandwritingPanel panel){panel.resize(style.height);continue;}if(rows.getChildAt(i) instanceof LinearLayout row)for(int j=0;j<row.getChildCount();j++){
+        for(int i=0;i<rows.getChildCount();i++){if(rows.getChildAt(i) instanceof HandwritingPanel panel){panel.resize(style.height);continue;}if(rows.getChildAt(i) instanceof LinearLayout row&&!"footer".equals(row.getTag()))for(int j=0;j<row.getChildCount();j++){
             View key=row.getChildAt(j);ViewGroup.LayoutParams params=key.getLayoutParams();if(params.height>=Ui.dp(getContext(),40)){params.height=Ui.dp(getContext(),style.mode==1&&i<rows.getChildCount()-1?Math.max(48,style.height):style.height);key.setLayoutParams(params);}
         }}
     }
